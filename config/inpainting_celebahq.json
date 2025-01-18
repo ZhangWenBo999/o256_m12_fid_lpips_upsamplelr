@@ -108,7 +108,7 @@
 //                            1,
 //                            2,
 //                            4,
-                            8
+//                            8
                         ],
                         "num_head_channels": 32,
                         "res_blocks": 2,

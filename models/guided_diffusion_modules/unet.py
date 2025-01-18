@@ -14,6 +14,8 @@ from .nn import (
 )
 
 from module_test.msff_scsa_3579_scaler_gn1_drop02 import *
+from module_test.a22_UpSample_lp import *
+
 
 class SiLU(nn.Module):
     def forward(self, x):
@@ -59,10 +61,12 @@ class Upsample(nn.Module):
         self.use_conv = use_conv
         if use_conv:
             self.conv = nn.Conv2d(self.channels, self.out_channel, 3, padding=1)
+        self.up_sample = DySample_UP(in_channels=channels, scale=2, style='lp')
 
     def forward(self, x):
         assert x.shape[1] == self.channels
-        x = F.interpolate(x, scale_factor=2, mode="nearest")
+        # x = F.interpolate(x, scale_factor=2, mode="nearest")
+        x = self.up_sample(x)
         if self.use_conv:
             x = self.conv(x)
         return x
@@ -414,14 +418,14 @@ class UNet(nn.Module):
                 ch = int(mult * inner_channel)
                 if ds in attn_res:
                     layers.append(
-                        # AttentionBlock(
-                        #     ch,
-                        #     use_checkpoint=use_checkpoint,
-                        #     num_heads=num_heads,
-                        #     num_head_channels=num_head_channels,
-                        #     use_new_attention_order=use_new_attention_order,
-                        # )
-                        MultiLevelSCSA_scaler(dim=ch)
+                        AttentionBlock(
+                            ch,
+                            use_checkpoint=use_checkpoint,
+                            num_heads=num_heads,
+                            num_head_channels=num_head_channels,
+                            use_new_attention_order=use_new_attention_order,
+                        )
+                        # MultiLevelSCSA_scaler(dim=ch)
                     )
                 self.input_blocks.append(EmbedSequential(*layers))
                 self._feature_size += ch
@@ -458,14 +462,14 @@ class UNet(nn.Module):
                 use_checkpoint=use_checkpoint,
                 use_scale_shift_norm=use_scale_shift_norm,
             ),
-            # AttentionBlock(
-            #     ch,
-            #     use_checkpoint=use_checkpoint,
-            #     num_heads=num_heads,
-            #     num_head_channels=num_head_channels,
-            #     use_new_attention_order=use_new_attention_order,
-            # ),
-            MultiLevelSCSA_scaler(dim=ch),
+            AttentionBlock(
+                ch,
+                use_checkpoint=use_checkpoint,
+                num_heads=num_heads,
+                num_head_channels=num_head_channels,
+                use_new_attention_order=use_new_attention_order,
+            ),
+            # MultiLevelSCSA_scaler(dim=ch),
             ResBlock(
                 ch,
                 cond_embed_dim,
@@ -493,14 +497,14 @@ class UNet(nn.Module):
                 ch = int(inner_channel * mult)
                 if ds in attn_res:
                     layers.append(
-                        # AttentionBlock(
-                        #     ch,
-                        #     use_checkpoint=use_checkpoint,
-                        #     num_heads=num_heads_upsample,
-                        #     num_head_channels=num_head_channels,
-                        #     use_new_attention_order=use_new_attention_order,
-                        # )
-                        MultiLevelSCSA_scaler(dim=ch)
+                        AttentionBlock(
+                            ch,
+                            use_checkpoint=use_checkpoint,
+                            num_heads=num_heads_upsample,
+                            num_head_channels=num_head_channels,
+                            use_new_attention_order=use_new_attention_order,
+                        )
+                        # MultiLevelSCSA_scaler(dim=ch)
                     )
                 if level and i == res_blocks:
                     out_ch = ch
