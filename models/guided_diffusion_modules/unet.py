@@ -13,7 +13,7 @@ from .nn import (
     gamma_embedding
 )
 
-from module_test.msff_scsa_3579_scaler_drop02 import *
+from module_test.msff_scsa_3579_scaler_gn1_drop02 import *
 
 class SiLU(nn.Module):
     def forward(self, x):
